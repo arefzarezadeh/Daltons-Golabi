@@ -380,8 +380,13 @@ int main()
     int rotations = 0;
     while (rotateLayer(n, 1, graph, type, connected, direction, &rotations))
         printGraph(n, direction), printf("\n");*/
+    for (int i = 0; i < 4; i++)
+    {
+        if (start(n, 1, graph, direction, type, connected, emptyGraph))
+            break;
+        direction[n / 2][n / 2]++;
+    }
 
-    start(n, 1, graph, direction, type, connected, emptyGraph);
 
     for (int i = 0; i < n; i++)
     {
