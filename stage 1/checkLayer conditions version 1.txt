@@ -1,0 +1,8 @@
+if ((getValue(n, up(n, i * n + j), graph) == layer - 1) && isConnected(n, i * n + j, up(n, i * n + j), connected))
+                    connected_to_last_layer++;
+                if ((getValue(n, right(n, i * n + j), graph) == layer - 1) && isConnected(n, i * n + j, right(n, i * n + j), connected))
+                    connected_to_last_layer++;
+                if ((getValue(n, down(n, i * n + j), graph) == layer - 1) && isConnected(n, i * n + j, down(n, i * n + j), connected))
+                    connected_to_last_layer++;
+                if ((getValue(n, left(n, i * n + j), graph) == layer - 1) && isConnected(n, i * n + j, left(n, i * n + j), connected))
+                    connected_to_last_layer++;
