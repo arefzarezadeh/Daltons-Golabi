@@ -7,6 +7,7 @@ int size;
 int **conditions;
 int *belongs;
 int countConditions;
+int pCell;
 
 int emptyRowCells(int row)
 {
@@ -30,9 +31,22 @@ int emptyColCells(int col)
     return cnt;
 }
 
-int findBestCondition() //returns n>=0 for conditions int int**, -(2n+1) for row and -2n for col
+int emptyCells()
 {
-    int min = size + 1, tmp, index, priority = 6;
+    int count = 0;
+    for (int i = 0; i < size * size; i++)
+    {
+        if (table[i] == 0)
+            count++;
+    }
+    return count;
+}
+
+int findBestCondition() //returns n>=0 for conditions int int**, -(2n+3) for row and -2(n+1) for col
+{
+    if (!emptyCells)
+        return -1;
+    int min = size + 1, tmp, index = -1, priority = 6;
     for (int i = 0; i < countConditions; i++)
     {
         tmp = *(*(conditions + i) + *(*(conditions + i) + 2) + 3);
@@ -60,10 +74,10 @@ int findBestCondition() //returns n>=0 for conditions int int**, -(2n+1) for row
     {
         tmp = emptyRowCells(i);
         if ((tmp != 0) && (tmp < min))
-            return -1 * (2 * i + 1);
+            index = -1 * (2 * i + 3), min = tmp;
         tmp = emptyColCells(i);
         if ((tmp != 0) && (tmp < min))
-            return -2 * i;
+            index = -2 * (i + 1), min = tmp;
     }
     return index;
 }
@@ -112,7 +126,7 @@ bool checkPlus(int cnd)
             sum += *(table + *(*(conditions + cnd) + i + 3));
     }
 
-    if (sum < *(*(conditions + cnd) + 1))
+    if (sum > *(*(conditions + cnd) + 1))
         return false;
     if (hasZero || sum == *(*(conditions + cnd) + 1))
         return true;
@@ -126,15 +140,15 @@ bool checkProduct(int cnd)
     int prod = 1;
     for (int i = 0; i < *(*(conditions + cnd) + 2); i++)
     {
-        if (*(*(conditions + cnd) + 1) % *(table + *(*(conditions + cnd) + i + 3)) != 0)
-            return false;
         if (*(table + *(*(conditions + cnd) + i + 3)) == 0)
             hasZero = true;
+        else if (*(*(conditions + cnd) + 1) % *(table + *(*(conditions + cnd) + i + 3)) != 0)
+            return false;
         else
             prod *= *(table + *(*(conditions + cnd) + i + 3));
     }
 
-    if (prod < *(*(conditions + cnd) + 1))
+    if (prod > *(*(conditions + cnd) + 1))
         return false;
     if (hasZero || prod == *(*(conditions + cnd) + 1))
         return true;
@@ -143,9 +157,9 @@ bool checkProduct(int cnd)
 
 bool checkMinus(int cnd)
 {
-    if ((*(table + *(*(conditions + cnd) + 3)) != 0) && ((size < *(table + *(*(conditions + cnd) + 3)) + *(*(conditions + cnd) + 1)) || (*(table + *(*(conditions + cnd) + 3)) >= *(*(conditions + cnd) + 1))))
+    if ((*(table + *(*(conditions + cnd) + 3)) != 0) && ((size < *(table + *(*(conditions + cnd) + 3)) + *(*(conditions + cnd) + 1)) && (*(table + *(*(conditions + cnd) + 3)) <= *(*(conditions + cnd) + 1))))
         return false;
-    if ((*(table + *(*(conditions + cnd) + 4)) != 0) && ((size < *(table + *(*(conditions + cnd) + 4)) + *(*(conditions + cnd) + 1)) || (*(table + *(*(conditions + cnd) + 4)) >= *(*(conditions + cnd) + 1))))
+    if ((*(table + *(*(conditions + cnd) + 4)) != 0) && ((size < *(table + *(*(conditions + cnd) + 4)) + *(*(conditions + cnd) + 1)) && (*(table + *(*(conditions + cnd) + 4)) <= *(*(conditions + cnd) + 1))))
         return false;
     if ((*(table + *(*(conditions + cnd) + 3)) == 0) || (*(table + *(*(conditions + cnd) + 4)) == 0))
         return true;
@@ -198,9 +212,9 @@ bool checkConditions(int cell)
         return checkMinus(cnd);
     case 1:
         return checkProduct(cnd);
-    case 5:
-        return checkDivision(cnd);
     case 4:
+        return checkDivision(cnd);
+    case 5:
         return checkMod(cnd);
     }
 }
@@ -210,24 +224,81 @@ bool checkAll(int cell)
     return checkColumn(cell % size) && checkRow(cell / size) && checkConditions(cell);
 }
 
-bool solve(int cell)
+bool solve()
 {
-    if (cell == size * size)
+    int cell, cnd = findBestCondition();
+    //printf("cnd:%d\n", cnd);
+    if (cnd == -1)
+    {
+        for (int i = 0; i < size * size; i++)
+        {
+            if (!checkAll(i))
+                return false;
+        }
         return true;
+    }
+    if (cnd > -1)
+    {
+        for (int i = 0; i < *(*(conditions + cnd) + 2); i++)
+        {
+            if (table[*(*(conditions + cnd) + 3 + i)] == 0)
+            {
+                cell = *(*(conditions + cnd) + 3 + i);
+                if (pCell != cell)
+                    break;
+            }
+        }
+    }
+    else
+    {
+        cnd *= -1;
+        int rc = cnd / 2 - 1;
 
-    if (*(table + cell) != 0)
-        return solve(cell + 1);
+        if (cnd % 2 == 1)
+        {
+            for (int i = 0; i < size; i++)
+            {
+                if (table[rc * size + i] == 0)
+                {
+                    cell = rc * size + i;
+                    if (pCell != cell)
+                        break;
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < size; i++)
+            {
+                if (table[rc + size * i] == 0)
+                {
+                    cell = rc + size * i;
+                    if (pCell != cell)
+                        break;
+                }
+            }
+        }
+    }
+
+
+    //printf("cell:%d\n", cell);
+
+
+    /*if (*(table + cell) != 0)
+        return solve(cell + 1);*/
+    *(*(conditions + *(belongs + cell)) + *(*(conditions + *(belongs + cell)) + 2) + 3) -= 1;
     for (int i = 1; i <= size; i++)
     {
         *(table + cell) = i;
         if (checkAll(cell))
         {
-            if (solve(cell + 1))
+            if (solve())
                 return true;
         }
     }
 
     *(table + cell) = 0;
+    *(*(conditions + *(belongs + cell)) + *(*(conditions + *(belongs + cell)) + 2) + 3) += 1;
     return false;
 }
 
@@ -268,10 +339,10 @@ int main()
             **(conditions + i) = 1;
             break;
         case '/':
-            **(conditions + i) = 5;
+            **(conditions + i) = 4;
             break;
         case '%':
-            **(conditions + i) = 4;
+            **(conditions + i) = 5;
             break;
         default:
             **(conditions + i) = -1;
@@ -287,21 +358,26 @@ int main()
     }
 
 
-    table[0] = 0;
-    table[1] = 0;
+    /*table[0] = 0;
+    table[1] = 2;
     table[2] = 0;
-    table[3] = 1;
+    table[3] = 1;*/
 
-    printf("solve(0):%d\n", solve(0));
-    printf("checkRow(0):%d\n", checkRow(0));
+    //printf("solve(0):%d\n", solve());
+    /*printf("checkRow(0):%d\n", checkRow(0));
     printf("checkRow(1):%d\n", checkRow(1));
     printf("checkCol(0):%d\n", checkColumn(0));
     printf("checkCol(1):%d\n", checkColumn(1));
+    printf("checkConditions(1):%d\n", checkConditions(1));
     printf("checkConditions(0):%d\n", checkConditions(0));
-    printf("checkAll(0):%d\n", checkAll(0));
-    printf("checkAll(1):%d\n", checkAll(1));
-    printf("checkAll(2):%d\n", checkAll(2));
-    printf("checkAll(3):%d\n", checkAll(3));
+    printf("checkConditions(1):%d\n", checkConditions(1));
+    printf("checkConditions(2):%d\n", checkConditions(2));
+    printf("checkConditions(3):%d\n", checkConditions(3));
+    printf("emptyRowCells(0):%d\n", emptyRowCells(0));
+    printf("emptyRowCells(1):%d\n", emptyRowCells(1));
+    printf("emptyRowCells(2):%d\n", emptyRowCells(2));
+    printf("best:%d\n", findBestCondition());*/
+    solve();
     for (int i = 0; i < size; i++)
     {
         for (int j = 0; j < size; j++)
