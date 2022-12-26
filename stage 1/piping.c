@@ -395,5 +395,13 @@ int main()
         printf("\n");
     }
 
+    printf("connected:\n");
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+            printf("%d%d%d%d ", connected[i][j][0], connected[i][j][1], connected[i][j][2], connected[i][j][3]);
+        printf("\n");
+    }
+
     return 17;
 }

@@ -8,6 +8,9 @@ int **conditions;
 int *belongs;
 int countConditions;
 int pCell;
+int *emptyRow;
+int *emptyCol;
+int totalEmpty;
 
 int emptyRowCells(int row)
 {
@@ -47,6 +50,19 @@ int findBestCondition() //returns n>=0 for conditions int int**, -(2n+3) for row
     if (!emptyCells)
         return -1;
     int min = size + 1, tmp, index = -1, priority = 6;
+
+    for (int i = 0; i < size; i++)
+    {
+        tmp = emptyRow[i];
+        if ((tmp != 0) && (tmp < min))
+            index = -1 * (2 * i + 3), min = tmp;
+        tmp = emptyCol[i];
+        if ((tmp != 0) && (tmp < min))
+            index = -2 * (i + 1), min = tmp;
+    }
+    if (tmp == 1)
+        return index;
+
     for (int i = 0; i < countConditions; i++)
     {
         tmp = *(*(conditions + i) + *(*(conditions + i) + 2) + 3);
@@ -68,16 +84,6 @@ int findBestCondition() //returns n>=0 for conditions int int**, -(2n+3) for row
                 }
             }
         }
-    }
-
-    for (int i = 0; i < size; i++)
-    {
-        tmp = emptyRowCells(i);
-        if ((tmp != 0) && (tmp < min))
-            index = -1 * (2 * i + 3), min = tmp;
-        tmp = emptyColCells(i);
-        if ((tmp != 0) && (tmp < min))
-            index = -2 * (i + 1), min = tmp;
     }
     return index;
 }
@@ -244,8 +250,6 @@ bool solve()
             if (table[*(*(conditions + cnd) + 3 + i)] == 0)
             {
                 cell = *(*(conditions + cnd) + 3 + i);
-                if (pCell != cell)
-                    break;
             }
         }
     }
@@ -287,6 +291,9 @@ bool solve()
     /*if (*(table + cell) != 0)
         return solve(cell + 1);*/
     *(*(conditions + *(belongs + cell)) + *(*(conditions + *(belongs + cell)) + 2) + 3) -= 1;
+    emptyCol[cell % size] -= 1;
+    emptyRow[cell / size] -= 1;
+    totalEmpty--;
     for (int i = 1; i <= size; i++)
     {
         *(table + cell) = i;
@@ -299,6 +306,9 @@ bool solve()
 
     *(table + cell) = 0;
     *(*(conditions + *(belongs + cell)) + *(*(conditions + *(belongs + cell)) + 2) + 3) += 1;
+    emptyCol[cell % size] += 1;
+    emptyRow[cell / size] += 1;
+    totalEmpty++;
     return false;
 }
 
@@ -311,6 +321,8 @@ int main()
     table = (int *) calloc(size * size, sizeof(int));
     belongs = (int *) malloc(size * size * sizeof(int));
     conditions = (int **) malloc(k * sizeof(int*));
+    emptyCol = (int *) malloc(size * size * sizeof(int));
+    emptyRow = (int *) malloc(size * size * sizeof(int));
 
     for (int i = 0; i < k; i++)
     {
@@ -357,7 +369,12 @@ int main()
         }
     }
 
-
+    for (int i = 0; i < size; i++)
+    {
+        emptyCol[i] = emptyColCells(i);
+        emptyRow[i] = emptyRowCells(i);
+    }
+    totalEmpty = emptyCells();
     /*table[0] = 0;
     table[1] = 2;
     table[2] = 0;
